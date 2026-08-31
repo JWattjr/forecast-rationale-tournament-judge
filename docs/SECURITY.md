@@ -11,7 +11,7 @@
 
 ## Contract-specific boundary
 
-Validators independently score frozen rationale dimensions with a documented ±1 tolerance and independently resolve the event outcome. Brier, normalized rationale, weighted combined score, and leaderboard order are deterministic.
+Validators independently score frozen rationale dimensions and must agree exactly on every dimension score, and independently resolve the event outcome. Because an accepted score map is stored verbatim and folded into the combined score, exact agreement is what guarantees that every validator-compatible result yields the same leaderboard order; genuine disagreement fails closed. Brier, normalized rationale, weighted combined score, and leaderboard order are deterministic.
 
 Commit → reveal/judge → outcome WAIT/CONTESTED/RESOLVED/VOID → one-time entry finalization. Rationale judging closes before the outcome window, and max-wait guarantees terminal VOID.
 

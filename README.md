@@ -4,7 +4,7 @@ A standalone GenLayer Intelligent Contract that rewards forecast accuracy and bo
 
 ## GenLayer-native decision
 
-Validators independently score frozen rationale dimensions with a documented ±1 tolerance and independently resolve the event outcome. Brier, normalized rationale, weighted combined score, and leaderboard order are deterministic.
+Validators independently score frozen rationale dimensions and must agree exactly on every dimension score, and independently resolve the event outcome. Because an accepted score map is stored verbatim and folded into the combined score, exact agreement is what guarantees that every validator-compatible result yields the same leaderboard order; genuine disagreement fails closed. Brier, normalized rationale, weighted combined score, and leaderboard order are deterministic.
 
 ## Lifecycle and API
 
@@ -16,8 +16,7 @@ Every evidence URL is frozen, bounded, public HTTPS. Fetched text is untrusted i
 
 ## Live evidence
 
-- [StudioNet contract](https://explorer-studio.genlayer.com/address/0x1aFd9c613983A4d7C4BE48c197Bb2BdE1810B4bf)
-- [Bradbury contract](https://explorer-bradbury.genlayer.com/address/0x108bFa49D9D45A02a75f6379a2737f626B377A5C)
+- [Corrected StudioNet contract](https://explorer-studio.genlayer.com/address/0x928f40f8F9615c5875c62CEee3Ef2a1a2903dDaf)
 - Exact StudioNet transaction hashes, constructor arguments, state, and execution results are in `deployments/studionet.json`.
 
 ## Verify

@@ -1,8 +1,8 @@
 # Security and consensus audit: ForecastRationaleTournamentJudge
 
-Audit date: 2026-08-12
+Audit date: 2026-08-31
 Scope: `contracts/ForecastRationaleTournamentJudge.py`
-Method: manual review, full GenVM lint and pinned-runner schema validation, direct-mode adversarial tests, explicit independent-validator execution, and finalized StudioNet/Bradbury receipt and state inspection.
+Method: manual review, GenVM AST lint, direct-mode adversarial tests, exhaustive ranking-invariance regression, explicit independent-validator review, and finalized StudioNet receipt, source, schema, and state inspection.
 
 ## Result
 
@@ -16,17 +16,17 @@ No unresolved critical or high-severity code issue was found after remediation. 
 | FT-02 | High | Rationale judging after reveal close could introduce hindsight. | Close judging at the reveal deadline, before outcome resolution. |
 | FT-03 | High | Cancelled outcomes were not consistently terminal/finalizable. | Store terminal VOID, make resolution idempotent, and keep voided entries off the leaderboard. |
 | FT-04 | Medium | Outcome resolution could remain retryable forever. | Freeze max-wait and deterministically VOID at expiry. |
+| FT-05 | High | The rationale validator accepted per-dimension score differences of one even though the accepted raw map changed `rationale_bps`, `combined_bps`, and leaderboard order. | Require the complete normalized 0-4 score map to agree exactly before it can be stored or used; malformed, missing, extra, and out-of-range scores fail closed. |
 
 ## Verification
 
 - Exact runner pin: `py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6`.
-- `genvm-lint check` passes AST and SDK schema validation.
+- `genvm-lint` passes all AST safety checks. The local linter bundle cannot perform its SDK phase because it does not contain the contract's pinned runner tar; the matching StudioNet deployment supplies runtime source/schema verification.
 - Direct tests exercise lifecycle, failure, and independent-validator paths.
+- Exhaustive regression over the three-dimension 0-4 score space proves every validator-accepted pair produces identical `rationale_bps`; malformed and out-of-range maps fail closed.
 - AST regression proves nondeterministic closures do not reference `self`.
 - StudioNet deployment and consensus transaction are finalized with successful leader execution; exact evidence is in `deployments/studionet.json`.
-- Bradbury deployment and smoke-write receipts are finalized after successful execution and state reads; exact evidence is in `deployments/bradbury.json`.
-
-Bradbury finalized outcome resolution reached `AGREE` with five of five validators voting `AGREE`; the transaction executed `FINISHED_WITH_RETURN` and stored `RESOLVED / YES`. Receipt stderr was empty.
+- Live StudioNet integration assertions re-read the stored exact score map and pass.
 
 ## Residual risk
 
