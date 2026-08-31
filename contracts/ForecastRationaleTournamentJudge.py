@@ -104,6 +104,39 @@ def _score(value, label: str) -> int:
     return score
 
 
+def _scores_agree(left, right) -> bool:
+    """Validator-compatible score maps must be identical, not merely close.
+
+    The accepted map is stored verbatim and folded into ``rationale_bps`` and
+    therefore into leaderboard order, so accepting a one-point difference on a
+    single dimension would let two validator-compatible results rank entries
+    differently. Exact agreement is what keeps every accepted result
+    ranking-identical; genuine disagreement fails closed instead.
+    """
+    if not isinstance(left, dict) or not isinstance(right, dict):
+        return False
+    if not left or set(left) != set(right):
+        return False
+    for dimension in left:
+        left_score = left[dimension]
+        right_score = right[dimension]
+        if isinstance(left_score, bool) or isinstance(right_score, bool):
+            return False
+        if not isinstance(left_score, int) or not isinstance(right_score, int):
+            return False
+        if not 0 <= left_score <= 4 or not 0 <= right_score <= 4:
+            return False
+        if left_score != right_score:
+            return False
+    return True
+
+
+def _rationale_bps(scores, rubric) -> int:
+    """Deterministic rationale score in basis points over the frozen rubric."""
+    total = sum(int(scores.get(dimension["id"], 0)) for dimension in rubric)
+    return (total * 10000) // (4 * len(rubric))
+
+
 def _judge_rationale_candidate(question: str, rubric_json: str, source_urls: list, entry: dict) -> dict:
     rubric = _parse_json(rubric_json, "rubric")
     evidence = []
@@ -344,16 +377,7 @@ class ForecastRationaleTournamentJudge(gl.Contract):
                 return False
             if leader.get("status") != independent.get("status") or leader.get("hard_flags") != independent.get("hard_flags") or leader.get("source_coverage") != independent.get("source_coverage"):
                 return False
-            leader_scores = leader.get("scores", {})
-            independent_scores = independent.get("scores", {})
-            if set(leader_scores) != set(independent_scores):
-                return False
-            for dimension in leader_scores:
-                left = int(leader_scores[dimension])
-                right = int(independent_scores[dimension])
-                if (left == 0) != (right == 0) or abs(left - right) > 1:
-                    return False
-            return True
+            return _scores_agree(leader.get("scores", {}), independent.get("scores", {}))
 
         return gl.vm.run_nondet_unsafe(leader_fn, validator_fn)
 
@@ -430,8 +454,7 @@ class ForecastRationaleTournamentJudge(gl.Contract):
             return entry
         scores = entry.get("scores", {})
         rubric = _parse_json(self.rubric_json, "rubric")
-        rationale_total = sum(int(scores.get(dimension["id"], 0)) for dimension in rubric)
-        entry["rationale_bps"] = (rationale_total * 10000) // (4 * len(rubric))
+        entry["rationale_bps"] = _rationale_bps(scores, rubric)
         if self.outcome == "VOID":
             entry["brier_bps"] = 0
             entry["accuracy_bps"] = 0
